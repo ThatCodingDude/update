@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Behavior Compass</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #E0E0E0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        #mainContainer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1400px;
+            margin-top: 20px;
+        }
+        #leftContainer, #rightContainer {
+            flex: 1;
+            min-width: 300px;
+            margin: 10px;
+            padding: 20px;
+            background-color: #1E1E1E;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        #canvasContainer {
+            flex: 2;
+            position: relative;
+            margin: 10px;
+            padding: 20px;
+            background-color: #1E1E1E;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        canvas {
+            width: 100%;
+            height: auto;
+            border: 1px solid #333;
+            border-radius: 10px;
+        }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #controls button {
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #controls button:hover {
+            background-color: #0056b3;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section h3 {
+            margin-bottom: 10px;
+        }
+        .section textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #333;
+            color: #E0E0E0;
+            resize: none;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        #jsonControls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        #jsonControls button {
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #jsonControls button:hover {
+            background-color: #0056b3;
+        }
+        #jsonControls input {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            #mainContainer {
+                flex-direction: column;
+                align-items: center;
+            }
+            #canvasContainer {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="mainContainer">
+        <div id="leftContainer">
+            <div class="section">
+                <h3>Beliefs</h3>
+                <textarea id="beliefs"></textarea>
+            </div>
+            <div class="section">
+                <h3>Scripts</h3>
+                <textarea id="scripts"></textarea>
+            </div>
+            <div id="jsonControls">
+                <button onclick="downloadData()">Download Data</button>
+                <input type="file" id="upload" accept=".json" onchange="uploadData(event)">
+                <button onclick="document.getElementById('upload').click()">Upload Data</button>
+            </div>
+        </div>
+        <div id="canvasContainer">
+            <div id="controls">
+                <button onclick="clearCircles()">Clear Circles</button>
+                <button onclick="saveCanvasWithCircles()">Save Image with Circles</button>
+            </div>
+        </div>
+        <div id="rightContainer">
+            <div class="section">
+                <h3>ABC</h3>
+                <textarea id="abc"></textarea>
+            </div>
+            <div class="section">
+                <h3>6AM</h3>
+                <textarea id="sixam"></textarea>
+            </div>
+            <div class="section">
+                <h3>F.A.T.E.</h3>
+                <textarea id="fate"></textarea>
+            </div>
+        </div>
+    </div>
+    <script>
+        let img;
+        let circles = [];
+
+        function preload() {
+            img = loadImage('image.png');
+        }
+
+        function setup() {
+            const canvas = createCanvas(800, 800);
+            canvas.parent('canvasContainer');
+            noLoop();
+        }
+
+        function draw() {
+            background(255);
+            image(img, 0, 0, width, height);
+            drawCircles();
+        }
+
+        function mousePressed() {
+            if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
+                circles.push({ x: mouseX, y: mouseY, r: 25 });
+                redraw();
+            }
+        }
+
+        function drawCircles() {
+            noFill();
+            stroke(255, 0, 0);
+            strokeWeight(3);
+            circles.forEach(circle => {
+                ellipse(circle.x, circle.y, circle.r * 2);
+            });
+        }
+
+        function clearCircles() {
+            circles = [];
+            redraw();
+        }
+
+        function saveCanvasWithCircles() {
+            redraw(); // Ensure the latest circles are drawn
+            setTimeout(() => {
+                saveCanvas(canvas, 'behavior_compass_with_circles', 'png');
+            }, 100); // Delay to ensure the canvas is fully drawn
+        }
+
+        function downloadData() {
+            const data = {
+                beliefs: document.getElementById('beliefs').value,
+                scripts: document.getElementById('scripts').value,
+                abc: document.getElementById('abc').value,
+                sixam: document.getElementById('sixam').value,
+                fate: document.getElementById('fate').value
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function uploadData(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    const data = JSON.parse(content);
+                    document.getElementById('beliefs').value = data.beliefs || '';
+                    document.getElementById('scripts').value = data.scripts || '';
+                    document.getElementById('abc').value = data.abc || '';
+                    document.getElementById('sixam').value = data.sixam || '';
+                    document.getElementById('fate').value = data.fate || '';
+                };
+                reader.readAsText(file);
+            }
+        }
+    </script>
+</body>
+</html>
